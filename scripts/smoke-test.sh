@@ -54,21 +54,21 @@ check "health status + body" "$code" 200 "$body" "OK"
 
 # ── Auth ──
 echo "── Auth ──"
-resp=$(do_get "$BASE/opencode/zen/go/v1/models" "$KEY")
+resp=$(do_get "$BASE/opencode/v1/models" "$KEY")
 code=$(echo "$resp" | tail -1); body=$(echo "$resp" | head -n -1)
 check "valid key — 200 + JSON data" "$code" 200 "$body" '"data"'
 
-resp=$(do_get "$BASE/opencode/zen/go/v1/models" "sk-wrong")
+resp=$(do_get "$BASE/opencode/v1/models" "sk-wrong")
 code=$(echo "$resp" | tail -1); body=$(echo "$resp" | head -n -1)
 check "invalid key — 401 + Unauthorized" "$code" 401 "$body" "Unauthorized"
 
-resp=$(do_get "$BASE/opencode/zen/go/v1/models" "none")
+resp=$(do_get "$BASE/opencode/v1/models" "none")
 code=$(echo "$resp" | tail -1); body=$(echo "$resp" | head -n -1)
 check "no key — 401 + Unauthorized" "$code" 401 "$body" "Unauthorized"
 
 # ── Routing ──
 echo "── Routing ──"
-resp=$(do_get "$BASE/opencode/zen/go/v1/models" "$KEY")
+resp=$(do_get "$BASE/opencode/v1/models" "$KEY")
 code=$(echo "$resp" | tail -1); body=$(echo "$resp" | head -n -1)
 check "opencode — 200 + model list" "$code" 200 "$body" '"data"'
 

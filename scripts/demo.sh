@@ -32,7 +32,7 @@ echo "  Models List"
 echo "══════════════════════════════════════════"
 echo ""
 echo "── opencode ──"
-curl -s -H "Authorization: Bearer $KEY" "$BASE/opencode/zen/go/v1/models" | python3 -c "import sys,json;d=json.load(sys.stdin);[print(f'  {m[\"id\"]}') for m in d['data'][:5]];print(f'  ... +{len(d[\"data\"])-5} more')"
+curl -s -H "Authorization: Bearer $KEY" "$BASE/opencode/v1/models" | python3 -c "import sys,json;d=json.load(sys.stdin);[print(f'  {m[\"id\"]}') for m in d['data'][:5]];print(f'  ... +{len(d[\"data\"])-5} more')"
 
 # MiMo chat
 demo "mimo-v2.5 chat" "$BASE/mimo/v1/chat/completions" \

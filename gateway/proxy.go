@@ -1,10 +1,12 @@
 package gateway
 
 import (
+	"crypto/tls"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -27,26 +29,28 @@ func NewProxy(route config.RouteConfig, timeoutStr string) *Proxy {
 		log.Fatalf("invalid timeout %s: %v", timeoutStr, err)
 	}
 
-	proxy := httputil.NewSingleHostReverseProxy(target)
+	authValue := strings.ReplaceAll(route.AuthFormat, "${api_key}", route.APIKey)
 
-	proxy.Director = func(req *http.Request) {
-		req.URL.Scheme = target.Scheme
-		req.URL.Host = target.Host
-		req.Host = target.Host
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Scheme = target.Scheme
+			req.URL.Host = target.Host
+			req.Host = target.Host
+			req.URL.Path = path.Join(target.Path, req.URL.Path)
 
-		authValue := strings.ReplaceAll(route.AuthFormat, "${api_key}", route.APIKey)
-		req.Header.Set(route.AuthHeader, authValue)
-
-		req.Header.Del("Host")
-	}
-
-	proxy.Transport = &http.Transport{
-		ResponseHeaderTimeout: time.Duration(timeoutSeconds) * time.Second,
-	}
-
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		log.Printf("proxy error: %s %s -> %v", r.Method, r.URL.Path, err)
-		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+			req.Header.Set(route.AuthHeader, authValue)
+		},
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: time.Duration(timeoutSeconds) * time.Second,
+			ForceAttemptHTTP2:     false,
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("proxy error: %s %s -> %v", r.Method, r.URL.Path, err)
+			http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		},
 	}
 
 	return &Proxy{route: route, proxy: proxy}
@@ -56,7 +60,6 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.proxy.ServeHTTP(w, r)
 }
 
-// LoggingMiddleware logs request summary
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
