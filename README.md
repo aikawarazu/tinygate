@@ -4,11 +4,11 @@
   <img src="https://img.shields.io/badge/binary-~8MB-green?style=flat" alt="Binary Size">
 </p>
 
-# GateKey
+# TinyGate
 
-> Personal lightweight LLM gateway — one key to rule them all.
+> Tiny personal LLM gateway — one key, all models.
 
-GateKey is a zero-dependency HTTP reverse proxy that sits between your applications and LLM providers. You configure your real API keys once, then all your apps talk to GateKey with a single unified key. When a provider key changes, you update GateKey — not your apps.
+TinyGate is a zero-dependency HTTP reverse proxy between your applications and LLM providers. Configure your real API keys once, then all your apps talk to TinyGate with a single unified key. When a provider key changes, update TinyGate — not your apps.
 
 ## Why?
 
@@ -17,9 +17,9 @@ Before:                          After:
                                  
 App A ──► sk-openai-real-xxx     App A ──┐
 App B ──► sk-ant-real-yyy        App B ──┤
-App C ──► sk-zhipu-real-zzz      App C ──┤── sk-gateway-key ──► GateKey ──┬──► OpenAI
+App C ──► sk-zhipu-real-zzz      App C ──┤── sk-gateway-key ──► TinyGate ──┬──► OpenAI
                                                                            ├──► Anthropic
-When key rotates → update        When key rotates → update GateKey         └──► Zhipu
+When key rotates → update        When key rotates → update TinyGate         └──► Zhipu
 every app config                 config only. Apps never notice.
 ```
 
@@ -40,7 +40,7 @@ every app config                 config only. Apps never notice.
 ### 1. Build
 
 ```bash
-go build -o gatekey .
+go build -o tinygate .
 ```
 
 ### 2. Configure
@@ -72,7 +72,7 @@ routes:
 export ZHIPU_API_KEY="your-key"
 export OPENCODE_GO_API_KEY="your-key"
 
-./gatekey -config config.yaml
+./tinygate -config config.yaml
 ```
 
 ### 4. Use
@@ -87,7 +87,7 @@ curl http://localhost:39901/opencode/v1/chat/completions \
 
 ## Routing
 
-GateKey strips the route prefix and appends the remaining path to the downstream URL:
+TinyGate strips the route prefix and appends the remaining path to the downstream URL:
 
 ```
 Client path                              → Downstream
@@ -148,11 +148,11 @@ routes:
 ## Docker
 
 ```bash
-docker build -t gatekey .
+docker build -t tinygate .
 docker run -p 39901:39901 \
   -e ZHIPU_API_KEY="your-key" \
   -e OPENCODE_GO_API_KEY="your-key" \
-  gatekey
+  tinygate
 ```
 
 ## License

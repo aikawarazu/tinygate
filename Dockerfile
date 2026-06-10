@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o just-llm-gateway .
+RUN CGO_ENABLED=0 GOOS=linux go build -o tinygate .
 
 FROM alpine:latest
 
@@ -15,9 +15,9 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
-COPY --from=builder /app/just-llm-gateway .
+COPY --from=builder /app/tinygate .
 COPY --from=builder /app/config.yaml .
 
 EXPOSE 39901
 
-CMD ["./just-llm-gateway", "-config", "config.yaml"]
+CMD ["./tinygate", "-config", "config.yaml"]
