@@ -121,8 +121,8 @@ cp .env.example .env
 vim .env
 
 # Build and run
-docker build -t tinygate .
-docker run -p 39901:39901 --env-file .env tinygate
+make docker-build
+make docker-start
 ```
 
 ## License

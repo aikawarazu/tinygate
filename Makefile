@@ -13,6 +13,7 @@ clean:
 	rm -f tinygate
 
 docker-build:
+	CGO_ENABLED=0 GOOS=linux go build -o tinygate .
 	docker build -t tinygate .
 
 docker-start:
