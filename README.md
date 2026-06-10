@@ -116,11 +116,13 @@ routes:
 ## Docker
 
 ```bash
+# Copy example and fill in your keys
+cp .env.example .env
+vim .env
+
+# Build and run
 docker build -t tinygate .
-docker run -p 39901:39901 \
-  -e ZHIPU_API_KEY="your-key" \
-  -e OPENCODE_GO_API_KEY="your-key" \
-  tinygate
+docker run -p 39901:39901 --env-file .env tinygate
 ```
 
 ## License
