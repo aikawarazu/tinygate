@@ -41,7 +41,8 @@ func main() {
 		})
 	}
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	proxyMux := http.NewServeMux()
+	proxyMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		route, remainingPath, ok := router.Match(r.URL.Path)
 		if !ok {
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -59,8 +60,11 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
-	handler := gateway.AuthMiddleware(cfg.Gateway.APIKeys, mux)
-	handler = gateway.LoggingMiddleware(handler)
+	authProxy := gateway.AuthMiddleware(cfg.Gateway.APIKeys, proxyMux)
+
+	mux.Handle("/", authProxy)
+
+	handler := gateway.LoggingMiddleware(mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("starting server on %s", addr)

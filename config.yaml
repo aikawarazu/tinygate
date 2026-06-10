@@ -5,8 +5,8 @@ server:
 
 gateway:
   api_keys:
-    - "sk-my-key-1"
-    - "sk-my-key-2"
+    - "sk-gateway-key-1"
+    - "sk-gateway-key-2"
 
 routes:
   - prefix: "/zhipu"
