@@ -1,4 +1,4 @@
-.PHONY: build test start clean docker-build docker-start
+.PHONY: build test start clean smoke docker-build docker-start docker-stop
 
 build:
 	go build -o tinygate .
@@ -21,6 +21,9 @@ docker-start:
 
 docker-stop:
 	@docker stop tinygate 2>/dev/null; docker rm tinygate 2>/dev/null; true
+
+smoke:
+	@./scripts/smoke-test.sh
 
 # one command to rule them all
 all: test build
