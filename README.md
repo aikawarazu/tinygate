@@ -37,48 +37,16 @@ every app config                 config only. Apps never notice.
 
 ## Quick Start
 
-### 1. Build
-
 ```bash
-go build -o tinygate .
-```
-
-### 2. Configure
-
-```yaml
-# config.yaml
-server:
-  port: 39901
-  timeout: 1200s
-
-gateway:
-  api_keys:
-    - "sk-gateway-key-1"
-    - "sk-gateway-key-2"
-
-routes:
-  - prefix: "/zhipu"
-    downstream_url: "https://open.bigmodel.cn/api/paas"
-    api_key: "${ZHIPU_API_KEY}"
-
-  - prefix: "/opencode"
-    downstream_url: "https://opencode.ai/zen/go"
-    api_key: "${OPENCODE_GO_API_KEY}"
-```
-
-### 3. Run
-
-```bash
+# 1. Set your API keys (once)
 export ZHIPU_API_KEY="your-key"
+export MIMO_API_KEY="your-key"
 export OPENCODE_GO_API_KEY="your-key"
 
-./tinygate -config config.yaml
-```
+# 2. One command
+make all && make start
 
-### 4. Use
-
-```bash
-# All your apps use the same key
+# 3. Done — use it
 curl http://localhost:39901/opencode/v1/chat/completions \
   -H "Authorization: Bearer sk-gateway-key-1" \
   -H "Content-Type: application/json" \
