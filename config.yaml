@@ -1,0 +1,22 @@
+server:
+  port: 39901
+  timeout: 1200s
+  health: true
+
+gateway:
+  api_keys:
+    - "sk-my-key-1"
+    - "sk-my-key-2"
+
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "${ZHIPU_API_KEY}"
+
+  - prefix: "/mimo"
+    downstream_url: "https://api.xiaomimimo.com"
+    api_key: "${MIMO_API_KEY}"
+
+  - prefix: "/opencode"
+    downstream_url: "https://opencode.ai/zen/go"
+    api_key: "${OPENCODE_GO_API_KEY}"
