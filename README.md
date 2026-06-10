@@ -1,0 +1,160 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go" alt="Go">
+  <img src="https://img.shields.io/badge/deps-zero-blue?style=flat" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/binary-~8MB-green?style=flat" alt="Binary Size">
+</p>
+
+# GateKey
+
+> Personal lightweight LLM gateway — one key to rule them all.
+
+GateKey is a zero-dependency HTTP reverse proxy that sits between your applications and LLM providers. You configure your real API keys once, then all your apps talk to GateKey with a single unified key. When a provider key changes, you update GateKey — not your apps.
+
+## Why?
+
+```
+Before:                          After:
+                                 
+App A ──► sk-openai-real-xxx     App A ──┐
+App B ──► sk-ant-real-yyy        App B ──┤
+App C ──► sk-zhipu-real-zzz      App C ──┤── sk-gateway-key ──► GateKey ──┬──► OpenAI
+                                                                           ├──► Anthropic
+When key rotates → update        When key rotates → update GateKey         └──► Zhipu
+every app config                 config only. Apps never notice.
+```
+
+## Features
+
+- **Zero dependencies** — pure Go standard library, single 8MB binary
+- **Transparent proxying** — fully transparent, provider-agnostic path forwarding
+- **Key mapping** — unified upstream key → per-provider downstream key
+- **Config-driven** — YAML config, zero code changes to add providers
+- **Streaming** — SSE streaming transparently passed through
+- **Multi-key upstream** — support multiple upstream keys for rotation
+- **Custom auth** — override auth header/format per provider
+- **Health check** — `GET /health`
+- **Docker** — multi-stage build included
+
+## Quick Start
+
+### 1. Build
+
+```bash
+go build -o gatekey .
+```
+
+### 2. Configure
+
+```yaml
+# config.yaml
+server:
+  port: 39901
+  timeout: 1200s
+
+gateway:
+  api_keys:
+    - "sk-gateway-key-1"
+    - "sk-gateway-key-2"
+
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "${ZHIPU_API_KEY}"
+
+  - prefix: "/opencode"
+    downstream_url: "https://opencode.ai/zen/go"
+    api_key: "${OPENCODE_GO_API_KEY}"
+```
+
+### 3. Run
+
+```bash
+export ZHIPU_API_KEY="your-key"
+export OPENCODE_GO_API_KEY="your-key"
+
+./gatekey -config config.yaml
+```
+
+### 4. Use
+
+```bash
+# All your apps use the same key
+curl http://localhost:39901/opencode/v1/chat/completions \
+  -H "Authorization: Bearer sk-gateway-key-1" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"glm-5.1","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+## Routing
+
+GateKey strips the route prefix and appends the remaining path to the downstream URL:
+
+```
+Client path                              → Downstream
+──────────────────────────────────────────────────────────────────
+POST /zhipu/v4/chat/completions          → https://open.bigmodel.cn/api/paas/v4/chat/completions
+POST /mimo/v1/chat/completions           → https://api.xiaomimimo.com/v1/chat/completions
+POST /opencode/v1/chat/completions       → https://opencode.ai/zen/go/v1/chat/completions
+```
+
+## Configuration
+
+```yaml
+server:
+  port: 39901          # server port
+  timeout: 1200s       # global timeout (supports "1200s" / "20m")
+  health: true         # enable /health endpoint
+
+gateway:
+  api_keys:            # valid upstream keys (any of these works)
+    - "sk-gateway-key-1"
+    - "sk-gateway-key-2"
+
+routes:
+  - prefix: "/provider"           # URL prefix for this provider
+    downstream_url: "https://..." # downstream base URL
+    api_key: "${ENV_VAR}"         # real API key (env var or literal)
+    auth_header: "Authorization"  # optional, default: Authorization
+    auth_format: "Bearer ${api_key}" # optional, default
+```
+
+### Environment variables
+
+Use `${VAR_NAME}` to reference environment variables. Use `$${NOT_VAR}` to escape.
+
+```yaml
+api_key: "${DEEPSEEK_KEY}"   # resolves from environment
+api_key: "$${NOT_A_VAR}"     # literal "${NOT_A_VAR}"
+api_key: "sk-raw-key"        # literal, no resolution needed
+```
+
+### Custom auth per provider
+
+```yaml
+# Default: Authorization: Bearer xxx
+routes:
+  - prefix: "/openai"
+    downstream_url: "https://api.openai.com"
+    api_key: "${OPENAI_KEY}"
+
+# Anthropic-style
+  - prefix: "/claude"
+    downstream_url: "https://api.anthropic.com"
+    api_key: "${ANTHROPIC_KEY}"
+    auth_header: "x-api-key"
+    auth_format: "${api_key}"
+```
+
+## Docker
+
+```bash
+docker build -t gatekey .
+docker run -p 39901:39901 \
+  -e ZHIPU_API_KEY="your-key" \
+  -e OPENCODE_GO_API_KEY="your-key" \
+  gatekey
+```
+
+## License
+
+MIT
