@@ -1,6 +1,6 @@
 GO := /usr/local/go/bin/go
 
-.PHONY: build test start clean smoke models docker-build docker-start docker-stop
+.PHONY: build test start clean smoke models docker-build docker-start docker-stop package
 
 build:
 	$(GO) build -o tinygate .
@@ -13,6 +13,11 @@ start:
 
 clean:
 	rm -f tinygate
+
+package: build
+	@mkdir -p dist
+	tar czf dist/tinygate.tar.gz tinygate config.yaml .env.example
+	@echo "dist/tinygate.tar.gz ready"
 
 models:
 	@./scripts/models-ref.sh
