@@ -175,4 +175,4 @@ make docker-start
 
 ## License
 
-MIT
+[Apache 2.0](LICENSE)
