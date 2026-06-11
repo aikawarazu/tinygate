@@ -1,11 +1,18 @@
 GO := /usr/local/go/bin/go
 
-.PHONY: build test start clean smoke models docker-build docker-start docker-stop docker-export docker-load package
+.PHONY: build test start clean smoke models docker-build docker-start docker-stop package
 
-package:
-	@mkdir -p dist
-	docker save tinygate:latest | gzip > dist/tinygate.tar.gz
-	@echo "dist/tinygate.tar.gz ready ($(shell du -sh dist/tinygate.tar.gz | cut -f1))"
+build:
+	$(GO) build -o tinygate .
+
+test:
+	$(GO) test ./... -v
+
+start:
+	@./tinygate -config config.yaml &
+
+clean:
+	rm -f tinygate
 
 models:
 	@./scripts/models-ref.sh
@@ -23,6 +30,10 @@ docker-start:
 docker-stop:
 	@docker stop tinygate 2>/dev/null; docker rm tinygate 2>/dev/null; true
 
-# one command to rule them all
+package:
+	@mkdir -p dist
+	docker save tinygate:latest | gzip > dist/tinygate.tar.gz
+	@echo "dist/tinygate.tar.gz ready ($(shell du -sh dist/tinygate.tar.gz | cut -f1))"
+
 all: test build
 	@echo "TinyGate ready. Run 'make start' to launch."
