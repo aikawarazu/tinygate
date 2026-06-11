@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 func TestProxy_DirectorRewritesRequest(t *testing.T) {

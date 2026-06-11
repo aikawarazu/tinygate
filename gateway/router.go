@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 type Router struct {

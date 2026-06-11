@@ -113,6 +113,54 @@ routes:
     auth_format: "${api_key}"
 ```
 
+## TinyGate vs nginx
+
+Both can do LLM gateway — transparent proxying with auth replacement. Which to choose?
+
+**nginx can do the same thing.** Here's the equivalent config:
+
+```nginx
+# nginx.conf — same functionality as TinyGate
+map $http_authorization $auth_ok {
+    "Bearer sk-gateway-key-1" 1;
+    "Bearer sk-gateway-key-2" 1;
+    default 0;
+}
+
+server {
+    listen 39901;
+
+    location /health { return 200 "OK"; }
+
+    if ($auth_ok = 0) { return 401; }
+
+    location /zhipu/ {
+        proxy_pass https://open.bigmodel.cn/api/paas/;
+        proxy_set_header Authorization "Bearer $ZHIPU_API_KEY";
+    }
+}
+```
+
+So why TinyGate?
+
+| | nginx | TinyGate |
+|---|---|---|
+| Transparent proxy | ✅ Default | ✅ Default |
+| SSE streaming | ✅ Native | ✅ Native |
+| Auth replacement | ✅ `proxy_set_header` | ✅ Declarative config |
+| Add a new provider | Edit nginx.conf + `nginx -s reload` | Add 3 lines YAML + restart |
+| Multi-key rotation | Requires lua module or complex `map` | `api_keys` list, one line each |
+| Custom auth format | `proxy_set_header` works but not declarative | `auth_header` + `auth_format` per route |
+| Env var injection | Needs `env` directive + lua module | Built-in `${ENV_VAR}` |
+| Bearer token validation | `if` hack (not a real `if` in nginx) or lua | Built-in, first-class |
+| Container size | ~40MB | ~8MB, zero dependencies |
+| Startup | ~1s | ~10ms |
+| Extend with custom logic | Lua module (heavy) | Go code (trivial) |
+
+**Choose nginx if:** you already run nginx, your team knows it well, and you need reverse-proxy features beyond LLM gateway.
+
+**Choose TinyGate if:** you want zero-maintenance single-binary deployment, one-line provider additions, and easy extensibility in Go.
+
 ## Docker
 
 ```bash

@@ -1,4 +1,4 @@
-# just-llm-gateway Implementation Plan
+# tinygate Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -13,7 +13,7 @@
 ## File Structure
 
 ```
-just-llm-gateway/
+tinygate/
 ├── main.go                    # Entry point, server startup
 ├── config/
 │   ├── config.go              # YAML parsing + env var injection
@@ -40,8 +40,8 @@ just-llm-gateway/
 - [ ] **Step 1: Initialize Go module**
 
 ```bash
-cd /root/workspace/just-llm-gateway
-go mod init github.com/user/just-llm-gateway
+cd /root/workspace/tinygate
+go mod init github.com/user/tinygate
 ```
 
 - [ ] **Step 2: Add yaml dependency**
@@ -56,7 +56,7 @@ go get gopkg.in/yaml.v3
 cat go.mod
 ```
 
-Expected: Module file with `module github.com/user/just-llm-gateway` and yaml dependency.
+Expected: Module file with `module github.com/user/tinygate` and yaml dependency.
 
 ---
 
@@ -201,7 +201,7 @@ routes:
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./config/ -v
 ```
 
@@ -333,7 +333,7 @@ func injectEnvVars(s string) string {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./config/ -v
 ```
 
@@ -437,7 +437,7 @@ func TestAuthMiddleware_EmptyAPIKeys(t *testing.T) {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestAuth
 ```
 
@@ -486,7 +486,7 @@ func AuthMiddleware(apiKeys []string, next http.Handler) http.Handler {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestAuth
 ```
 
@@ -516,7 +516,7 @@ package gateway
 import (
 	"testing"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 func TestRouter_MatchPrefix(t *testing.T) {
@@ -636,7 +636,7 @@ func TestRouter_ExactMatch(t *testing.T) {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestRouter
 ```
 
@@ -652,7 +652,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 type Router struct {
@@ -687,7 +687,7 @@ func (r *Router) Match(path string) (*config.RouteConfig, string, bool) {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestRouter
 ```
 
@@ -719,7 +719,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 func TestProxy_DirectorRewritesRequest(t *testing.T) {
@@ -836,7 +836,7 @@ func TestProxy_CustomAuthHeader(t *testing.T) {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestProxy
 ```
 
@@ -856,7 +856,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 type Proxy struct {
@@ -921,7 +921,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v -run TestProxy
 ```
 
@@ -979,7 +979,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 - [ ] **Step 2: Verify existing tests still pass**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./gateway/ -v
 ```
 
@@ -1012,8 +1012,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/user/just-llm-gateway/config"
-	"github.com/user/just-llm-gateway/gateway"
+	"github.com/user/tinygate/config"
+	"github.com/user/tinygate/gateway"
 )
 
 func main() {
@@ -1120,16 +1120,16 @@ routes:
 - [ ] **Step 3: Verify build succeeds**
 
 ```bash
-cd /root/workspace/just-llm-gateway
-go build -o just-llm-gateway .
+cd /root/workspace/tinygate
+go build -o tinygate .
 ```
 
-Expected: Binary `just-llm-gateway` created.
+Expected: Binary `tinygate` created.
 
 - [ ] **Step 4: Run all tests**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test ./... -v
 ```
 
@@ -1165,7 +1165,7 @@ RUN go mod download
 COPY . .
 
 # Build binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o just-llm-gateway .
+RUN CGO_ENABLED=0 GOOS=linux go build -o tinygate .
 
 # Final stage
 FROM alpine:latest
@@ -1175,12 +1175,12 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/just-llm-gateway .
+COPY --from=builder /app/tinygate .
 COPY --from=builder /app/config.yaml .
 
 EXPOSE 39901
 
-CMD ["./just-llm-gateway", "-config", "config.yaml"]
+CMD ["./tinygate", "-config", "config.yaml"]
 ```
 
 - [ ] **Step 2: Commit**
@@ -1212,8 +1212,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/user/just-llm-gateway/config"
-	"github.com/user/just-llm-gateway/gateway"
+	"github.com/user/tinygate/config"
+	"github.com/user/tinygate/gateway"
 )
 
 func TestIntegration_EndToEnd(t *testing.T) {
@@ -1300,7 +1300,7 @@ func TestIntegration_EndToEnd(t *testing.T) {
 - [ ] **Step 2: Run integration test**
 
 ```bash
-cd /root/workspace/just-llm-gateway
+cd /root/workspace/tinygate
 go test -v -run TestIntegration
 ```
 

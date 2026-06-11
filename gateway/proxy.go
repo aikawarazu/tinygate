@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/user/just-llm-gateway/config"
+	"github.com/user/tinygate/config"
 )
 
 type Proxy struct {

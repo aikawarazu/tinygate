@@ -1,4 +1,4 @@
-# just-llm-gateway 设计文档
+# tinygate 设计文档
 
 ## 概述
 
@@ -21,7 +21,7 @@
 
 ```
                      ┌─────────────────────────────────────┐
-                     │         just-llm-gateway             │
+                     │         tinygate             │
                      │                                      │
    Client ──────────►│ 1. Auth Middleware                    │
    Bearer sk-xxx     │    └─ 匹配 api_keys 列表，任一通过    │
@@ -151,7 +151,7 @@ routes:
 ## 代码结构
 
 ```
-just-llm-gateway/
+tinygate/
 ├── main.go              # 入口，启动 server
 ├── config/
 │   └── config.go        # YAML 配置解析 + 环境变量注入
@@ -185,15 +185,15 @@ just-llm-gateway/
 ### 二进制
 
 ```bash
-go build -o just-llm-gateway .
-./just-llm-gateway -config config.yaml
+go build -o tinygate .
+./tinygate -config config.yaml
 ```
 
 ### Docker
 
 ```bash
-docker build -t just-llm-gateway .
-docker run -p 39901:39901 -v ./config.yaml:/app/config.yaml just-llm-gateway
+docker build -t tinygate .
+docker run -p 39901:39901 -v ./config.yaml:/app/config.yaml tinygate
 ```
 
 ## 设计决策

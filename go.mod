@@ -1,4 +1,4 @@
-module github.com/user/just-llm-gateway
+module github.com/user/tinygate
 
 go 1.22.0
 

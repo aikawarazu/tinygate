@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/user/just-llm-gateway/config"
-	"github.com/user/just-llm-gateway/gateway"
+	"github.com/user/tinygate/config"
+	"github.com/user/tinygate/gateway"
 )
 
 func TestIntegration_EndToEnd(t *testing.T) {
