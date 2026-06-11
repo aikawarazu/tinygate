@@ -4,9 +4,7 @@ server:
   health: true
 
 gateway:
-  api_keys:
-    - "sk-gateway-key-1"
-    - "sk-gateway-key-2"
+  api_keys: "${TINYGATE_API_KEYS}"
 
 routes:
   - prefix: "/zhipu"

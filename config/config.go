@@ -22,7 +22,21 @@ type ServerConfig struct {
 }
 
 type GatewayConfig struct {
-	APIKeys []string `yaml:"api_keys"`
+	APIKeys string `yaml:"api_keys"`
+}
+
+func (g GatewayConfig) Keys() []string {
+	if g.APIKeys == "" {
+		return nil
+	}
+	parts := strings.Split(g.APIKeys, ",")
+	var keys []string
+	for _, p := range parts {
+		if k := strings.TrimSpace(p); k != "" {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 type RouteConfig struct {
@@ -45,6 +59,8 @@ func ParseConfig(data []byte) (*Config, error) {
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
+
+	cfg.Gateway.APIKeys = injectEnvVars(cfg.Gateway.APIKeys)
 
 	// Set defaults for routes
 	for i := range cfg.Routes {

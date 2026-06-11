@@ -60,7 +60,7 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
-	authProxy := gateway.AuthMiddleware(cfg.Gateway.APIKeys, proxyMux)
+	authProxy := gateway.AuthMiddleware(cfg.Gateway.Keys(), proxyMux)
 
 	mux.Handle("/", authProxy)
 

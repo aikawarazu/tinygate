@@ -12,9 +12,7 @@ server:
   timeout: 1200s
   health: true
 gateway:
-  api_keys:
-    - "sk-key-1"
-    - "sk-key-2"
+  api_keys: "sk-key-1,sk-key-2"
 routes:
   - prefix: "/zhipu"
     downstream_url: "https://open.bigmodel.cn/api/paas"
@@ -33,11 +31,12 @@ routes:
 	if !cfg.Server.Health {
 		t.Error("expected health true")
 	}
-	if len(cfg.Gateway.APIKeys) != 2 {
-		t.Errorf("expected 2 api keys, got %d", len(cfg.Gateway.APIKeys))
+	keys := cfg.Gateway.Keys()
+	if len(keys) != 2 {
+		t.Errorf("expected 2 api keys, got %d", len(keys))
 	}
-	if cfg.Gateway.APIKeys[0] != "sk-key-1" {
-		t.Errorf("expected sk-key-1, got %s", cfg.Gateway.APIKeys[0])
+	if keys[0] != "sk-key-1" {
+		t.Errorf("expected sk-key-1, got %s", keys[0])
 	}
 	if len(cfg.Routes) != 1 {
 		t.Fatalf("expected 1 route, got %d", len(cfg.Routes))
@@ -59,8 +58,7 @@ func TestParseConfig_EnvVarInjection(t *testing.T) {
 
 	yaml := `
 gateway:
-  api_keys:
-    - "sk-static"
+  api_keys: "sk-static"
 routes:
   - prefix: "/test"
     downstream_url: "https://example.com"
@@ -72,6 +70,27 @@ routes:
 	}
 	if cfg.Routes[0].APIKey != "sk-from-env" {
 		t.Errorf("expected sk-from-env, got %s", cfg.Routes[0].APIKey)
+	}
+}
+
+func TestParseConfig_EnvVarAPIKeys(t *testing.T) {
+	os.Setenv("TINYGATE_API_KEYS", "sk-a,sk-b,sk-c")
+	defer os.Unsetenv("TINYGATE_API_KEYS")
+
+	yaml := `
+gateway:
+  api_keys: "${TINYGATE_API_KEYS}"
+`
+	cfg, err := ParseConfig([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	keys := cfg.Gateway.Keys()
+	if len(keys) != 3 {
+		t.Errorf("expected 3 keys, got %d: %v", len(keys), keys)
+	}
+	if keys[1] != "sk-b" {
+		t.Errorf("expected sk-b, got %s", keys[1])
 	}
 }
 
@@ -96,9 +115,7 @@ func TestParseConfig_DefaultValues(t *testing.T) {
 server:
   health: true
 gateway:
-  api_keys:
-    - "sk-key-1"
-    - "sk-key-2"
+  api_keys: "sk-key-1,sk-key-2"
 routes:
   - prefix: "/test"
     downstream_url: "https://example.com"
@@ -114,14 +131,9 @@ routes:
 	if cfg.Server.Timeout != "1200s" {
 		t.Errorf("expected timeout 1200s, got %s", cfg.Server.Timeout)
 	}
-	if !cfg.Server.Health {
-		t.Error("expected health true")
-	}
-	if len(cfg.Gateway.APIKeys) != 2 {
-		t.Errorf("expected 2 api keys, got %d", len(cfg.Gateway.APIKeys))
-	}
-	if !cfg.Server.Health {
-		t.Error("expected default health true")
+	keys := cfg.Gateway.Keys()
+	if len(keys) != 2 {
+		t.Errorf("expected 2 api keys, got %d", len(keys))
 	}
 	if cfg.Routes[0].AuthHeader != "Authorization" {
 		t.Errorf("expected default auth_header Authorization, got %s", cfg.Routes[0].AuthHeader)

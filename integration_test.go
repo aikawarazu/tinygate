@@ -28,7 +28,7 @@ func TestIntegration_EndToEnd(t *testing.T) {
 	cfg := &config.Config{
 		Server: config.ServerConfig{Port: 39901, Timeout: "300s", Health: true},
 		Gateway: config.GatewayConfig{
-			APIKeys: []string{"sk-client"},
+			APIKeys: "sk-client",
 		},
 		Routes: []config.RouteConfig{
 			{
@@ -55,7 +55,7 @@ func TestIntegration_EndToEnd(t *testing.T) {
 		proxy.ServeHTTP(w, r)
 	})
 
-	handler := gateway.AuthMiddleware(cfg.Gateway.APIKeys, mux)
+	handler := gateway.AuthMiddleware(cfg.Gateway.Keys(), mux)
 
 	body := bytes.NewBufferString(`{"model":"test","messages":[{"role":"user","content":"Hello"}]}`)
 	req := httptest.NewRequest("POST", "/test/v1/chat/completions", body)
