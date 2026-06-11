@@ -16,6 +16,9 @@ models:
 	@./scripts/models-ref.sh
 
 smoke:
+	@./scripts/smoke-test.sh
+
+docker-build:
 	CGO_ENABLED=0 GOOS=linux go build -o tinygate .
 	docker build -t tinygate .
 
@@ -24,9 +27,6 @@ docker-start:
 
 docker-stop:
 	@docker stop tinygate 2>/dev/null; docker rm tinygate 2>/dev/null; true
-
-smoke:
-	@./scripts/smoke-test.sh
 
 # one command to rule them all
 all: test build
