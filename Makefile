@@ -1,4 +1,4 @@
-.PHONY: build test start clean smoke docker-build docker-start docker-stop
+.PHONY: build test start clean smoke models docker-build docker-start docker-stop
 
 build:
 	go build -o tinygate .
@@ -12,7 +12,10 @@ start:
 clean:
 	rm -f tinygate
 
-docker-build:
+models:
+	@./scripts/models-ref.sh
+
+smoke:
 	CGO_ENABLED=0 GOOS=linux go build -o tinygate .
 	docker build -t tinygate .
 
