@@ -1,10 +1,12 @@
+GO := /usr/local/go/bin/go
+
 .PHONY: build test start clean smoke models docker-build docker-start docker-stop
 
 build:
-	go build -o tinygate .
+	$(GO) build -o tinygate .
 
 test:
-	go test ./... -v
+	$(GO) test ./... -v
 
 start:
 	@./tinygate -config config.yaml &
@@ -19,7 +21,7 @@ smoke:
 	@./scripts/smoke-test.sh
 
 docker-build:
-	CGO_ENABLED=0 GOOS=linux go build -o tinygate .
+	CGO_ENABLED=0 GOOS=linux $(GO) build -o tinygate .
 	docker build -t tinygate .
 
 docker-start:
