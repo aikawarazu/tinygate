@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine
+FROM nginx:1.16.0-alpine
 
 WORKDIR /app
 
