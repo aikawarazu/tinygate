@@ -1,4 +1,6 @@
-FROM nginx:1.16.0-alpine
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
