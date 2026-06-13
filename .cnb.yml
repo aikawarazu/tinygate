@@ -7,6 +7,16 @@ main:
         - name: test
           script: go test ./... -v
 
+  pull_request:
+    - name: go-test
+      docker:
+        image: golang:1.22
+      stages:
+        - name: test
+          script: go test ./... -v
+
+$:
+  tag_push:
     - name: docker-build
       services:
         - docker
