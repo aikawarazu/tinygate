@@ -1,7 +1,9 @@
 package gateway
 
 import (
+	"bytes"
 	"crypto/tls"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -60,11 +62,31 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.proxy.ServeHTTP(w, r)
 }
 
-func LoggingMiddleware(next http.Handler) http.Handler {
+func LoggingMiddleware(verbose bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+
+		if verbose {
+			body := ""
+			if r.Body != nil && r.Method == "POST" {
+				b, _ := io.ReadAll(r.Body)
+				r.Body.Close()
+				body = string(b)
+				r.Body = io.NopCloser(bytes.NewBuffer(b))
+				if len(body) > 200 {
+					body = body[:200] + "..."
+				}
+			}
+			log.Printf("> %s %s", r.Method, r.URL.String())
+			log.Printf("> headers: %v", r.Header)
+			if body != "" {
+				log.Printf("> body: %s", body)
+			}
+		}
+
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(wrapped, r)
+
 		log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
 	})
 }
