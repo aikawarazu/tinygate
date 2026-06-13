@@ -15,8 +15,10 @@ main:
       stages:
         - name: build binary
           script: CGO_ENABLED=0 GOOS=linux go build -o tinygate .
-        - name: build image
-          script: docker build -t tinygate:latest .
+        - name: build and push image
+          script: |
+            docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+            docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest
 
   pull_request:
     - name: go-test
