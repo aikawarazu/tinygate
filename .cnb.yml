@@ -1,24 +1,27 @@
-name: Docker Image CI
-
-on:
+main:
   push:
-    branches: [ "main" ]
+    - name: go-test
+      docker:
+        image: golang:1.22
+      stages:
+        - name: test
+          script: go test ./... -v
+
+    - name: docker-build
+      services:
+        - docker
+      docker:
+        image: golang:1.22
+      stages:
+        - name: build binary
+          script: CGO_ENABLED=0 GOOS=linux go build -o tinygate .
+        - name: build image
+          script: docker build -t tinygate:latest .
+
   pull_request:
-    branches: [ "main" ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.22'
-
-    - name: Build binary
-      run: CGO_ENABLED=0 GOOS=linux go build -o tinygate .
-
-    - name: Build Docker image
-      run: docker build -t tinygate:latest .
+    - name: go-test
+      docker:
+        image: golang:1.22
+      stages:
+        - name: test
+          script: go test ./... -v
