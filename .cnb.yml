@@ -7,27 +7,6 @@ main:
         - name: test
           script: go test ./... -v
 
-    - name: build-artifacts
-      docker:
-        image: golang:1.22
-      stages:
-        - name: build linux
-          script: |
-            mkdir -p dist
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/tinygate-linux-amd64 .
-        - name: build windows
-          script: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/tinygate-windows-amd64.exe .
-        - name: upload linux
-          image: cnbcool/attachments:latest
-          settings:
-            attachments:
-              - "dist/tinygate-linux-amd64"
-        - name: upload windows
-          image: cnbcool/attachments:latest
-          settings:
-            attachments:
-              - "dist/tinygate-windows-amd64.exe"
-
     - name: docker-build
       services:
         - docker
@@ -50,3 +29,26 @@ main:
       stages:
         - name: test
           script: go test ./... -v
+
+$:
+  tag_push:
+    - name: build-artifacts
+      docker:
+        image: golang:1.22
+      stages:
+        - name: build linux
+          script: |
+            mkdir -p dist
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/tinygate-linux-amd64 .
+        - name: build windows
+          script: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/tinygate-windows-amd64.exe .
+        - name: upload linux
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - "dist/tinygate-linux-amd64"
+        - name: upload windows
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - "dist/tinygate-windows-amd64.exe"
