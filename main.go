@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/user/tinygate/config"
 	"github.com/user/tinygate/gateway"
@@ -20,6 +24,29 @@ const banner = `
    |_| |_|_| |_|\__, | \____|__|_|\__\___/_|
                 __/ |
                |___/
+`
+
+const defaultConfig = `# TinyGate Configuration
+server:
+  port: 39901
+  timeout: 1200s
+  health: true
+
+gateway:
+  api_keys: "${TINYGATE_API_KEYS}"
+
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "${ZHIPU_API_KEY}"
+
+  - prefix: "/mimo"
+    downstream_url: "https://api.xiaomimimo.com"
+    api_key: "${MIMO_API_KEY}"
+
+  - prefix: "/opencode"
+    downstream_url: "https://opencode.ai/zen/go"
+    api_key: "${OPENCODE_GO_API_KEY}"
 `
 
 func printQuickstart(port int) {
@@ -40,8 +67,20 @@ func main() {
 	verbose := flag.Bool("verbose", false, "enable verbose logging (print request/response details)")
 	flag.Parse()
 
+	exitReason := "normal shutdown"
+
 	data, err := os.ReadFile(*configPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("config file %s not found, generating default", *configPath)
+			if writeErr := os.WriteFile(*configPath, []byte(defaultConfig), 0644); writeErr != nil {
+				log.Fatalf("failed to generate config: %v", writeErr)
+			}
+			log.Printf("default config generated at %s", *configPath)
+			log.Println("please edit the config file and set your API keys, then restart")
+			log.Println("required env vars: TINYGATE_API_KEYS, ZHIPU_API_KEY, MIMO_API_KEY, OPENCODE_GO_API_KEY")
+			os.Exit(0)
+		}
 		log.Fatalf("failed to read config: %v", err)
 	}
 
@@ -92,15 +131,35 @@ func main() {
 	handler := gateway.LoggingMiddleware(*verbose, mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
-	log.Printf("starting server on %s", addr)
 
+	srv := &http.Server{Addr: addr, Handler: handler}
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-quit
+		exitReason = fmt.Sprintf("received signal: %v", sig)
+		log.Printf("shutting down: %s", exitReason)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("shutdown error: %v", err)
+		}
+	}()
+
+	log.Printf("starting server on %s", addr)
 	printQuickstart(cfg.Server.Port)
 
 	if *verbose {
 		log.Println("verbose logging enabled")
 	}
 
-	if err := http.ListenAndServe(addr, handler); err != nil {
-		log.Fatalf("server error: %v", err)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		exitReason = fmt.Sprintf("server error: %v", err)
+		log.Fatalf("exit: %s", exitReason)
 	}
+
+	log.Printf("exit: %s", exitReason)
 }
