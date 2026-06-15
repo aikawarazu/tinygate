@@ -47,7 +47,9 @@ jobs:
       run: docker build -t tinygate:latest .
 
     - name: Export image
-      run: docker save tinygate:latest | gzip > dist/tinygate.tar.gz
+      run: |
+        mkdir -p dist
+        docker save tinygate:latest | gzip > dist/tinygate.tar.gz
 
     - name: Upload Docker image
       uses: actions/upload-artifact@v4
