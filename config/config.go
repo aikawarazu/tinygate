@@ -71,9 +71,9 @@ func ParseConfig(data []byte) (*Config, error) {
 		if cfg.Routes[i].AuthFormat == "" {
 			cfg.Routes[i].AuthFormat = "Bearer ${api_key}"
 		}
-		if cfg.Routes[i].VersionPrefix == "" {
-			cfg.Routes[i].VersionPrefix = "/v1"
-		}
+		// version_prefix is intentionally left empty — each route must explicitly
+		// configure its own version. Different downstream providers use different
+		// API versions (e.g. /v4 for zhipu, /v1 for mimo).
 		// Inject env vars
 		cfg.Routes[i].APIKey = injectEnvVars(cfg.Routes[i].APIKey)
 	}

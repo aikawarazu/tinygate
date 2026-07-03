@@ -163,7 +163,7 @@ routes:
 	if cfg.Routes[0].AuthFormat != "Bearer ${api_key}" {
 		t.Errorf("expected default auth_format Bearer ${api_key}, got %s", cfg.Routes[0].AuthFormat)
 	}
-	if cfg.Routes[0].VersionPrefix != "/v1" {
-		t.Errorf("expected default version_prefix /v1, got %s", cfg.Routes[0].VersionPrefix)
+	if cfg.Routes[0].VersionPrefix != "" {
+		t.Errorf("expected default version_prefix to be empty, got %s", cfg.Routes[0].VersionPrefix)
 	}
 }

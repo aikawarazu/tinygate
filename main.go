@@ -39,14 +39,17 @@ routes:
   - prefix: "/zhipu"
     downstream_url: "https://open.bigmodel.cn/api/paas"
     api_key: "${ZHIPU_API_KEY}"
+    version_prefix: "/v4"
 
   - prefix: "/mimo"
     downstream_url: "https://api.xiaomimimo.com"
     api_key: "${MIMO_API_KEY}"
+    version_prefix: "/v1"
 
   - prefix: "/opencode"
     downstream_url: "https://opencode.ai/zen/go"
     api_key: "${OPENCODE_GO_API_KEY}"
+    version_prefix: "/v1"
 `
 
 func printQuickstart(port int) {
