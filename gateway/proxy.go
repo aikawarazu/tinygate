@@ -38,7 +38,13 @@ func NewProxy(route config.RouteConfig, timeoutStr string) *Proxy {
 			req.URL.Scheme = target.Scheme
 			req.URL.Host = target.Host
 			req.Host = target.Host
-			req.URL.Path = path.Join(target.Path, req.URL.Path)
+
+			// Insert version prefix if configured and request path lacks it
+			reqPath := req.URL.Path
+			if route.VersionPrefix != "" && !pathHasPrefixSegment(reqPath, route.VersionPrefix) {
+				reqPath = route.VersionPrefix + reqPath
+			}
+			req.URL.Path = path.Join(target.Path, reqPath)
 
 			req.Header.Set(route.AuthHeader, authValue)
 		},
@@ -62,6 +68,18 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.proxy.ServeHTTP(w, r)
 }
 
+// pathHasPrefixSegment checks if path has the given prefix as a full path segment.
+// "/v1/chat" has prefix "/v1" => true, "/v12/chat" has prefix "/v1" => false.
+func pathHasPrefixSegment(path, prefix string) bool {
+	if path == prefix {
+		return true
+	}
+	if strings.HasPrefix(path, prefix+"/") {
+		return true
+	}
+	return false
+}
+
 func LoggingMiddleware(verbose bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -69,12 +87,14 @@ func LoggingMiddleware(verbose bool, next http.Handler) http.Handler {
 		if verbose {
 			body := ""
 			if r.Body != nil && r.Method == "POST" {
-				b, _ := io.ReadAll(r.Body)
-				r.Body.Close()
-				body = string(b)
-				r.Body = io.NopCloser(bytes.NewBuffer(b))
-				if len(body) > 200 {
-					body = body[:200] + "..."
+				b, err := io.ReadAll(r.Body)
+				if err == nil {
+					r.Body.Close()
+					body = string(b)
+					r.Body = io.NopCloser(bytes.NewBuffer(b))
+					if len(body) > 200 {
+						body = body[:200] + "..."
+					}
 				}
 			}
 			log.Printf("> %s %s", r.Method, r.URL.String())

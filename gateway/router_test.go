@@ -56,6 +56,25 @@ func TestRouter_LongestPrefix(t *testing.T) {
 	}
 }
 
+func TestRouter_VersionlessPathMatch(t *testing.T) {
+	routes := []config.RouteConfig{
+		{Prefix: "/opencode", DownstreamURL: "https://opencode.ai/zen/go", APIKey: "sk-opencode"},
+	}
+	router := NewRouter(routes)
+
+	// Versionless path (without /v1) should still match the prefix
+	route, remainingPath, ok := router.Match("/opencode/chat/completions")
+	if !ok {
+		t.Fatal("expected match for versionless path")
+	}
+	if route.Prefix != "/opencode" {
+		t.Errorf("expected prefix /opencode, got %s", route.Prefix)
+	}
+	if remainingPath != "/chat/completions" {
+		t.Errorf("expected /chat/completions, got %s", remainingPath)
+	}
+}
+
 func TestRouter_ExactMatch(t *testing.T) {
 	routes := []config.RouteConfig{
 		{Prefix: "/health", DownstreamURL: "https://example.com", APIKey: "sk-1"},
