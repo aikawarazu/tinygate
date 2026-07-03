@@ -45,6 +45,7 @@ type RouteConfig struct {
 	APIKey         string `yaml:"api_key"`
 	AuthHeader     string `yaml:"auth_header"`
 	AuthFormat     string `yaml:"auth_format"`
+	VersionPrefix  string `yaml:"version_prefix"`
 }
 
 func ParseConfig(data []byte) (*Config, error) {

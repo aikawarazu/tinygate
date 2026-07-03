@@ -110,6 +110,28 @@ routes:
 	}
 }
 
+func TestParseConfig_VersionPrefix(t *testing.T) {
+	yaml := `
+gateway:
+  api_keys: "sk-key-1"
+routes:
+  - prefix: "/opencode"
+    downstream_url: "https://opencode.ai/zen/go"
+    api_key: "sk-opencode"
+    version_prefix: "/v1"
+`
+	cfg, err := ParseConfig([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.Routes) != 1 {
+		t.Fatalf("expected 1 route, got %d", len(cfg.Routes))
+	}
+	if cfg.Routes[0].VersionPrefix != "/v1" {
+		t.Errorf("expected version_prefix /v1, got %s", cfg.Routes[0].VersionPrefix)
+	}
+}
+
 func TestParseConfig_DefaultValues(t *testing.T) {
 	yaml := `
 server:
