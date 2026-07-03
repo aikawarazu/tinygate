@@ -7,12 +7,6 @@ import (
 
 func AuthMiddleware(apiKeys []string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// noauth mode: allow any request without auth header check
-		if len(apiKeys) == 1 && apiKeys[0] == "noauth" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

@@ -125,11 +125,14 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
-	authProxy := gateway.AuthMiddleware(cfg.Gateway.Keys(), proxyMux)
+	keys := cfg.Gateway.Keys()
+	handler := http.Handler(proxyMux)
+	if !(len(keys) == 1 && keys[0] == "noauth") {
+		handler = gateway.AuthMiddleware(keys, handler)
+	}
+	mux.Handle("/", handler)
 
-	mux.Handle("/", authProxy)
-
-	handler := gateway.LoggingMiddleware(*verbose, mux)
+	handler = gateway.LoggingMiddleware(*verbose, mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 
