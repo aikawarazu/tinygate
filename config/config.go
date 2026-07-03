@@ -71,6 +71,9 @@ func ParseConfig(data []byte) (*Config, error) {
 		if cfg.Routes[i].AuthFormat == "" {
 			cfg.Routes[i].AuthFormat = "Bearer ${api_key}"
 		}
+		if cfg.Routes[i].VersionPrefix == "" {
+			cfg.Routes[i].VersionPrefix = "/v1"
+		}
 		// Inject env vars
 		cfg.Routes[i].APIKey = injectEnvVars(cfg.Routes[i].APIKey)
 	}

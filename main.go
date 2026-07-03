@@ -47,7 +47,6 @@ routes:
   - prefix: "/opencode"
     downstream_url: "https://opencode.ai/zen/go"
     api_key: "${OPENCODE_GO_API_KEY}"
-    version_prefix: "/v1"
 `
 
 func printQuickstart(port int) {
