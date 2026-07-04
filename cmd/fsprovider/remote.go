@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -21,35 +22,57 @@ import (
 )
 
 func main() {
-	host := flag.String("host", "", "SSH server host")
-	port := flag.Int("port", 22, "SSH server port")
-	user := flag.String("user", "", "SSH user")
-	key := flag.String("key", "", "path to SSH private key")
-	password := flag.String("password", "", "SSH password")
-	localPort := flag.Int("local-port", 0, "local port to listen on")
-	remoteHost := flag.String("remote-host", "localhost", "remote host to forward to")
-	remotePort := flag.Int("remote-port", 0, "remote port to forward to")
-	debug := flag.Bool("debug", false, "enable debug logging (print SSH connection details, request/response info)")
-	httpOnly := flag.Bool("http-only", false, "only forward HTTP requests")
+	debug := flag.Bool("debug", false, "enable debug logging")
 	flag.Parse()
 
-	if *host == "" || *user == "" || *localPort == 0 || *remotePort == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: fsprovider-remote --host <host> --user <user> --local-port <port> --remote-port <port> [--key <path>] [--password <pass>] [--remote-host <host>] [--debug] [--http-only]\n")
+	host := os.Getenv("SSH_HOST")
+	user := os.Getenv("SSH_USER")
+	keyPath := os.Getenv("SSH_KEY")
+	password := os.Getenv("SSH_PASSWORD")
+
+	port := 22
+	if v := os.Getenv("SSH_PORT"); v != "" {
+		if p, err := strconv.Atoi(v); err == nil {
+			port = p
+		}
+	}
+
+	localPort := 0
+	if v := os.Getenv("LOCAL_PORT"); v != "" {
+		if p, err := strconv.Atoi(v); err == nil {
+			localPort = p
+		}
+	}
+
+	remoteHost := os.Getenv("REMOTE_HOST")
+	if remoteHost == "" {
+		remoteHost = "localhost"
+	}
+
+	remotePort := 0
+	if v := os.Getenv("REMOTE_PORT"); v != "" {
+		if p, err := strconv.Atoi(v); err == nil {
+			remotePort = p
+		}
+	}
+
+	if host == "" || user == "" || localPort == 0 || remotePort == 0 {
+		fmt.Fprintf(os.Stderr, "Usage: SSH_HOST=<host> SSH_USER=<user> SSH_KEY=<path> [SSH_PASSWORD=<pass>] LOCAL_PORT=<port> REMOTE_PORT=<port> [REMOTE_HOST=<host>] [SSH_PORT=<port>] fsprovider-remote [--debug]\n")
 		os.Exit(1)
 	}
-	if *key == "" && *password == "" {
-		fmt.Fprintf(os.Stderr, "Error: --key or --password is required\n")
+	if keyPath == "" && password == "" {
+		fmt.Fprintf(os.Stderr, "Error: SSH_KEY or SSH_PASSWORD is required\n")
 		os.Exit(1)
 	}
 
 	authMethods := []ssh.AuthMethod{}
-	if *password != "" {
-		authMethods = append(authMethods, ssh.Password(*password))
+	if password != "" {
+		authMethods = append(authMethods, ssh.Password(password))
 	}
-	if *key != "" {
-		keyBytes, err := os.ReadFile(*key)
+	if keyPath != "" {
+		keyBytes, err := os.ReadFile(keyPath)
 		if err != nil {
-			log.Fatalf("failed to read private key %s: %v", *key, err)
+			log.Fatalf("failed to read private key %s: %v", keyPath, err)
 		}
 		signer, err := ssh.ParsePrivateKey(keyBytes)
 		if err != nil {
@@ -59,15 +82,15 @@ func main() {
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User:            *user,
+		User:            user,
 		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         15 * time.Second,
 	}
 
-	addr := fmt.Sprintf("%s:%d", *host, *port)
+	addr := fmt.Sprintf("%s:%d", host, port)
 	if *debug {
-		log.Printf("connecting to SSH server %s as %s", addr, *user)
+		log.Printf("connecting to SSH server %s as %s", addr, user)
 	}
 
 	sshClient, err := ssh.Dial("tcp", addr, sshConfig)
@@ -80,7 +103,7 @@ func main() {
 		log.Printf("SSH connected: server version=%s", string(sshClient.ServerVersion()))
 	}
 
-	remoteAddr := fmt.Sprintf("%s:%d", *remoteHost, *remotePort)
+	remoteAddr := fmt.Sprintf("%s:%d", remoteHost, remotePort)
 
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
@@ -98,14 +121,10 @@ func main() {
 		},
 	}
 
-	localAddr := fmt.Sprintf(":%d", *localPort)
-	handler := http.Handler(loggingHandler(proxy, *debug))
-	if *httpOnly {
-		handler = httpOnlyMiddleware(handler)
-	}
+	localAddr := fmt.Sprintf(":%d", localPort)
 	server := &http.Server{
 		Addr:    localAddr,
-		Handler: handler,
+		Handler: loggingHandler(proxy, *debug),
 	}
 
 	if *debug {
@@ -127,18 +146,6 @@ func main() {
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
-}
-
-func httpOnlyMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete,
-			http.MethodPatch, http.MethodHead, http.MethodOptions:
-			next.ServeHTTP(w, r)
-		default:
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-		}
-	})
 }
 
 func loggingHandler(next http.Handler, debug bool) http.Handler {
