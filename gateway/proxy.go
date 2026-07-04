@@ -21,7 +21,7 @@ type Proxy struct {
 	proxy *httputil.ReverseProxy
 }
 
-func NewProxy(route config.RouteConfig, timeoutStr string, debug bool) *Proxy {
+func NewProxy(route config.RouteConfig, timeoutStr string, verbose bool) *Proxy {
 	target, err := url.Parse(route.DownstreamURL)
 	if err != nil {
 		log.Fatalf("invalid downstream_url %s: %v", route.DownstreamURL, err)
@@ -43,7 +43,7 @@ func NewProxy(route config.RouteConfig, timeoutStr string, debug bool) *Proxy {
 	}
 
 	var rt http.RoundTripper = transport
-	if debug {
+	if verbose {
 		rt = &debugRoundTripper{next: transport}
 	}
 
@@ -121,9 +121,7 @@ func (t *debugRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 		log.Printf("  %s: %s", k, strings.Join(req.Header[k], ", "))
 	}
 	if len(bodyBytes) > 0 {
-		log.Printf("--- Downstream Body (%d bytes) ---", len(bodyBytes))
-		log.Printf("%s", string(bodyBytes))
-		log.Printf("--- End Downstream Body ---")
+		log.Printf("--- downstream body: %d bytes (truncated) ---", len(bodyBytes))
 	}
 	log.Printf("=== END DEBUG DOWNSTREAM REQUEST ===")
 
@@ -151,13 +149,12 @@ func (t *debugRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	return resp, nil
 }
 
-func LoggingMiddleware(verbose, debug bool, next http.Handler) http.Handler {
+func LoggingMiddleware(verbose bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		originalPath := r.URL.Path
 
-		if debug {
-			log.Printf("=== DEBUG REQUEST ===")
+		if verbose {
+			log.Printf("=== REQUEST ===")
 			log.Printf("Method:  %s", r.Method)
 			log.Printf("URL:     %s", r.URL.String())
 			log.Printf("Proto:   %s", r.Proto)
@@ -178,41 +175,17 @@ func LoggingMiddleware(verbose, debug bool, next http.Handler) http.Handler {
 					r.Body.Close()
 					r.Body = io.NopCloser(bytes.NewBuffer(b))
 					if len(b) > 0 {
-						log.Printf("--- Request Body (%d bytes) ---", len(b))
-						log.Printf("%s", string(b))
-						log.Printf("--- End Body ---")
+						log.Printf("--- request body: %d bytes (truncated) ---", len(b))
 					}
 				}
 			}
-			log.Printf("=== END DEBUG REQUEST ===")
-		} else if verbose {
-			body := ""
-			if r.Body != nil && r.Method == "POST" {
-				b, err := io.ReadAll(r.Body)
-				if err == nil {
-					r.Body.Close()
-					body = string(b)
-					r.Body = io.NopCloser(bytes.NewBuffer(b))
-					if len(body) > 200 {
-						body = body[:200] + "..."
-					}
-				}
-			}
-			log.Printf("> %s %s", r.Method, r.URL.String())
-			log.Printf("> headers: %v", r.Header)
-			if body != "" {
-				log.Printf("> body: %s", body)
-			}
+			log.Printf("=== END REQUEST ===")
 		}
 
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(wrapped, r)
 
-		if debug {
-			log.Printf("%s %s -> %d %v (original path: %s)", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start), originalPath)
-		} else {
-			log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
-		}
+		log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
 	})
 }
 

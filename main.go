@@ -67,8 +67,7 @@ func printQuickstart(port int) {
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
-	verbose := flag.Bool("verbose", false, "enable verbose logging (print request/response summary)")
-	debug := flag.Bool("debug", false, "enable debug logging (print ALL request details — full headers, full body, URL)")
+	verbose := flag.Bool("verbose", false, "enable verbose logging (print full request/response details — headers, body, downstream)")
 	flag.Parse()
 
 	exitReason := "normal shutdown"
@@ -97,7 +96,7 @@ func main() {
 
 	proxies := make(map[string]*gateway.Proxy)
 	for _, route := range cfg.Routes {
-		proxies[route.Prefix] = gateway.NewProxy(route, cfg.Server.Timeout, *debug)
+		proxies[route.Prefix] = gateway.NewProxy(route, cfg.Server.Timeout, *verbose)
 	}
 
 	mux := http.NewServeMux()
@@ -135,7 +134,7 @@ func main() {
 	}
 	mux.Handle("/", handler)
 
-	handler = gateway.LoggingMiddleware(*verbose, *debug, mux)
+	handler = gateway.LoggingMiddleware(*verbose, mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 
@@ -159,9 +158,7 @@ func main() {
 	log.Printf("starting server on %s", addr)
 	printQuickstart(cfg.Server.Port)
 
-	if *debug {
-		log.Println("debug logging enabled (all request details printed)")
-	} else if *verbose {
+	if *verbose {
 		log.Println("verbose logging enabled")
 	}
 

@@ -1,4 +1,5 @@
-tinygate
+/tinygate
+/fsprovider
 dist/
 .omo/
 .env
