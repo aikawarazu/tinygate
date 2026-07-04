@@ -11,11 +11,10 @@
 - Flag: `--debug` — all SSH config from env vars
 - Env: `SSH_HOST`, `SSH_USER`, `SSH_KEY` (or `SSH_PASSWORD`), `LOCAL_PORT`, `REMOTE_HOST`, `REMOTE_PORT`, `SSH_PORT`
 
-## Files
+## Steps
 
-| File | Description |
-|---|---|
-| `gateway/proxy.go` | Director `log.Printf` downstream URL; `LoggingMiddleware(next)` always logs |
-| `main.go` | `--config /etc/tinygate`; no auto-config generation |
-| `cmd/fsprovider/remote.go` | SSH HTTP proxy; `--debug` flag; config from env |
-| `go.mod` | `golang.org/x/crypto v0.28.0` |
+1. ✅ Gateway: `--config /etc/tinygate`, always log
+2. ✅ fsprovider: `--debug`, env config
+3. ✅ CI: GOPROXY fix
+4. ✅ go.mod: tidy
+5. 🔲 Submit CNB merge request → https://cnb.cool/v0.1/tinygate/-/compare/main...feat/noauth-and-versionless-url
