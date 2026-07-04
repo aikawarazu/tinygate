@@ -23,6 +23,7 @@ import (
 
 func main() {
 	debug := flag.Bool("debug", false, "enable debug logging")
+	httpOnly := flag.Bool("http-only", false, "only forward HTTP requests")
 	flag.Parse()
 
 	host := os.Getenv("SSH_HOST")
@@ -122,9 +123,13 @@ func main() {
 	}
 
 	localAddr := fmt.Sprintf(":%d", localPort)
+	handler := http.Handler(loggingHandler(proxy, *debug))
+	if *httpOnly {
+		handler = httpOnlyMiddleware(handler)
+	}
 	server := &http.Server{
 		Addr:    localAddr,
-		Handler: loggingHandler(proxy, *debug),
+		Handler: handler,
 	}
 
 	if *debug {
@@ -146,6 +151,17 @@ func main() {
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
+}
+
+func httpOnlyMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS":
+			next.ServeHTTP(w, r)
+		default:
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+		}
+	})
 }
 
 func loggingHandler(next http.Handler, debug bool) http.Handler {
