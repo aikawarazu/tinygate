@@ -23,15 +23,16 @@
 
 ### Prerequisites
 - SSH key: `/root/.ssh/id_rsa` (RSA 3072, verified ✅)
-- suqinxia IP (pending)
+- suqinxia IP: `192.168.31.38:15022` ✅ (added to /etc/hosts)
+- suqinxia password (pending — key rejected by server)
 
 ### Steps
-1. `echo "<IP> suqinxia" >> /etc/hosts`
-2. Test connectivity: `ssh -i /root/.ssh/id_rsa root@suqinxia hostname`
+1. `echo "192.168.31.38 suqinxia" >> /etc/hosts`
+2. Test connectivity: `ssh -p 15022 root@suqinxia hostname`
 3. Start tunnel:
    ```
-   SSH_HOST=suqinxia SSH_USER=root SSH_KEY=/root/.ssh/id_rsa \
-   LOCAL_PORT=62222 REMOTE_PORT=22 \
+   SSH_HOST=suqinxia SSH_PORT=15022 SSH_USER=root \
+   SSH_PASSWORD=<password> LOCAL_PORT=62222 REMOTE_PORT=22 \
    ./fsprovider --debug --http-only
    ```
 4. Verify: `curl -v telnet://localhost:62222`
