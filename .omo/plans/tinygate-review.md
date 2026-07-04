@@ -17,7 +17,7 @@
 2. ✅ fsprovider: `--debug`, env config
 3. ✅ CI: GOPROXY fix
 4. ✅ go.mod: tidy
-5. 🔲 Submit CNB merge request → https://cnb.cool/v0.1/tinygate/-/compare/main...feat/noauth-and-versionless-url
+5. ✅ Submit CNB MR → https://cnb.cool/v0.1/tinygate/-/compare/main...feat/noauth-and-versionless-url
 
 ## SSH Tunnel Setup Plan
 
