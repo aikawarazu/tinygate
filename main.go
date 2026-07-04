@@ -134,7 +134,7 @@ func main() {
 	}
 	mux.Handle("/", handler)
 
-	handler = gateway.LoggingMiddleware(*verbose, mux)
+	handler = gateway.LoggingMiddleware(*verbose, http.Handler(mux))
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 
