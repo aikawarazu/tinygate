@@ -15,4 +15,6 @@ jobs:
       with:
         go-version: '1.22'
     - name: Test
+      env:
+        GOPROXY: https://goproxy.cn,direct
       run: go test -v ./...
