@@ -24,7 +24,8 @@ func main() {
 	host := flag.String("host", "", "SSH server host")
 	port := flag.Int("port", 22, "SSH server port")
 	user := flag.String("user", "", "SSH user")
-	sshArgs := flag.String("ssh-args", "", "path to SSH private key")
+	key := flag.String("key", "", "path to SSH private key")
+	password := flag.String("password", "", "SSH password")
 	localPort := flag.Int("local-port", 0, "local port to listen on")
 	remoteHost := flag.String("remote-host", "localhost", "remote host to forward to")
 	remotePort := flag.Int("remote-port", 0, "remote port to forward to")
@@ -32,26 +33,34 @@ func main() {
 	httpOnly := flag.Bool("http-only", false, "only forward HTTP requests")
 	flag.Parse()
 
-	if *host == "" || *user == "" || *sshArgs == "" || *localPort == 0 || *remotePort == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: fsprovider-remote --host <host> --user <user> --ssh-args <path> --local-port <port> --remote-port <port> [--remote-host <host>] [--debug]\n")
+	if *host == "" || *user == "" || *localPort == 0 || *remotePort == 0 {
+		fmt.Fprintf(os.Stderr, "Usage: fsprovider-remote --host <host> --user <user> --local-port <port> --remote-port <port> [--key <path>] [--password <pass>] [--remote-host <host>] [--debug] [--http-only]\n")
+		os.Exit(1)
+	}
+	if *key == "" && *password == "" {
+		fmt.Fprintf(os.Stderr, "Error: --key or --password is required\n")
 		os.Exit(1)
 	}
 
-	keyBytes, err := os.ReadFile(*sshArgs)
-	if err != nil {
-		log.Fatalf("failed to read private key %s: %v", *sshArgs, err)
+	authMethods := []ssh.AuthMethod{}
+	if *password != "" {
+		authMethods = append(authMethods, ssh.Password(*password))
 	}
-
-	signer, err := ssh.ParsePrivateKey(keyBytes)
-	if err != nil {
-		log.Fatalf("failed to parse private key: %v", err)
+	if *key != "" {
+		keyBytes, err := os.ReadFile(*key)
+		if err != nil {
+			log.Fatalf("failed to read private key %s: %v", *key, err)
+		}
+		signer, err := ssh.ParsePrivateKey(keyBytes)
+		if err != nil {
+			log.Fatalf("failed to parse private key: %v", err)
+		}
+		authMethods = append(authMethods, ssh.PublicKeys(signer))
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User: *user,
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
+		User:            *user,
+		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         15 * time.Second,
 	}
@@ -100,11 +109,7 @@ func main() {
 	}
 
 	if *debug {
-		mode := "SSH tunnel"
-		if *httpOnly {
-			mode = "SSH tunnel (HTTP only)"
-		}
-		log.Printf("proxy listening on %s, forwarding to %s via %s", localAddr, remoteAddr, mode)
+		log.Printf("proxy listening on %s, forwarding to %s via SSH", localAddr, remoteAddr)
 	}
 	fmt.Printf("listening on %s, forwarding to %s via SSH\n", localAddr, remoteAddr)
 
@@ -171,11 +176,7 @@ func loggingHandler(next http.Handler, debug bool) http.Handler {
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(wrapped, r)
 
-		if debug {
-			log.Printf("%s %s -> %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
-		} else {
-			log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
-		}
+		log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))
 	})
 }
 
