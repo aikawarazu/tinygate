@@ -1,0 +1,12 @@
+[Unit]
+Description=TinyGate LLM Gateway
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/tinygate
+Restart=always
+Environment=TINYGATE_API_KEYS=noauth
+
+[Install]
+WantedBy=multi-user.target
