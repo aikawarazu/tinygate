@@ -31,7 +31,7 @@ func TestProxy_DirectorRewritesRequest(t *testing.T) {
 		AuthFormat:    "Bearer ${api_key}",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	req := httptest.NewRequest("POST", "/v1/chat/completions", nil)
 	req.Header.Set("Authorization", "Bearer sk-client-key")
@@ -65,7 +65,7 @@ func TestProxy_VersionPrefixInsertion(t *testing.T) {
 		VersionPrefix: "/v1",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	// Request without version prefix in path
 	req := httptest.NewRequest("POST", "/chat/completions", nil)
@@ -97,7 +97,7 @@ func TestProxy_VersionPrefix_ExactMatch(t *testing.T) {
 		VersionPrefix: "/v1",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	// Request path equals version prefix exactly
 	req := httptest.NewRequest("POST", "/v1", nil)
@@ -131,7 +131,7 @@ func TestProxy_VersionPrefix_DifferentVersionPrefixInserted(t *testing.T) {
 		VersionPrefix: "/v1",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	// Request with /v12 (different version) should still get /v1 inserted
 	// because the segment-aware check correctly rejects /v12 as matching /v1
@@ -165,7 +165,7 @@ func TestProxy_VersionPrefixAlreadyPresent(t *testing.T) {
 		VersionPrefix: "/v1",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	// Request WITH version prefix in path - should not duplicate
 	req := httptest.NewRequest("POST", "/v1/chat/completions", nil)
@@ -196,7 +196,7 @@ func TestProxy_CustomAuthHeader(t *testing.T) {
 		AuthFormat:    "${api_key}",
 	}
 
-	proxy := NewProxy(route, "300s", false)
+	proxy := NewProxy(route, "300s")
 
 	req := httptest.NewRequest("POST", "/v1/messages", nil)
 	req.Header.Set("Authorization", "Bearer sk-client-key")

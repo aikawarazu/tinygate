@@ -51,7 +51,7 @@ func TestIntegration_EndToEnd(t *testing.T) {
 			return
 		}
 		r.URL.Path = remainingPath
-		proxy := gateway.NewProxy(*route, cfg.Server.Timeout, false)
+		proxy := gateway.NewProxy(*route, cfg.Server.Timeout)
 		proxy.ServeHTTP(w, r)
 	})
 

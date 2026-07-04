@@ -67,7 +67,6 @@ func printQuickstart(port int) {
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
-	verbose := flag.Bool("verbose", false, "enable verbose logging (print full request/response details — headers, body, downstream)")
 	flag.Parse()
 
 	exitReason := "normal shutdown"
@@ -96,7 +95,7 @@ func main() {
 
 	proxies := make(map[string]*gateway.Proxy)
 	for _, route := range cfg.Routes {
-		proxies[route.Prefix] = gateway.NewProxy(route, cfg.Server.Timeout, *verbose)
+		proxies[route.Prefix] = gateway.NewProxy(route, cfg.Server.Timeout)
 	}
 
 	mux := http.NewServeMux()
@@ -134,7 +133,7 @@ func main() {
 	}
 	mux.Handle("/", handler)
 
-	handler = gateway.LoggingMiddleware(*verbose, mux)
+	handler = gateway.LoggingMiddleware(mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 
@@ -157,10 +156,6 @@ func main() {
 
 	log.Printf("starting server on %s", addr)
 	printQuickstart(cfg.Server.Port)
-
-	if *verbose {
-		log.Println("verbose logging enabled")
-	}
 
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		exitReason = fmt.Sprintf("server error: %v", err)
