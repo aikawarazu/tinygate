@@ -45,6 +45,8 @@ func NewProxy(route config.RouteConfig, timeoutStr string) *Proxy {
 			req.URL.Path = path.Join(target.Path, reqPath)
 
 			req.Header.Set(route.AuthHeader, authValue)
+
+			log.Printf("→ downstream: %s %s", req.Method, req.URL.String())
 		},
 		Transport: &http.Transport{
 			ResponseHeaderTimeout: time.Duration(timeoutSeconds) * time.Second,
