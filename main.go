@@ -41,6 +41,7 @@ func printQuickstart(port int) {
 
 func main() {
 	configPath := flag.String("config", "/etc/tinygate", "path to config file")
+	verbose := flag.Bool("verbose", false, "verbose logging")
 	flag.Parse()
 
 	exitReason := "normal shutdown"
@@ -97,7 +98,7 @@ func main() {
 	}
 	mux.Handle("/", handler)
 
-	handler = gateway.LoggingMiddleware(http.Handler(mux))
+	handler = gateway.LoggingMiddleware(*verbose, http.Handler(mux))
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 
