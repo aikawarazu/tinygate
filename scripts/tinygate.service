@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/tinygate
+WorkingDirectory=/etc/tinygate
+ExecStart=/etc/tinygate/tinygate --config /etc/tinygate/config.yaml
 Restart=always
 Environment=TINYGATE_API_KEYS=noauth
 
