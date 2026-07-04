@@ -1,12 +1,15 @@
 package gateway
 
 import (
+	"bytes"
 	"crypto/tls"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -83,6 +86,27 @@ func pathHasPrefixSegment(path, prefix string) bool {
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+
+		keys := make([]string, 0, len(r.Header))
+		for k := range r.Header {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			log.Printf("> %s: %s", k, strings.Join(r.Header[k], ", "))
+		}
+
+		if r.Body != nil {
+			b, err := io.ReadAll(r.Body)
+			if err == nil {
+				r.Body.Close()
+				r.Body = io.NopCloser(bytes.NewBuffer(b))
+				if len(b) > 0 {
+					log.Printf("> body: %s", string(b))
+				}
+			}
+		}
+
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		next.ServeHTTP(wrapped, r)
 		log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, time.Since(start))

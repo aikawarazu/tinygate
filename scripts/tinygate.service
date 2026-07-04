@@ -1,0 +1,13 @@
+[Unit]
+Description=TinyGate LLM Gateway
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/tinygate
+ExecStart=/etc/tinygate/tinygate --config /etc/tinygate/config.yaml
+Restart=always
+Environment=TINYGATE_API_KEYS=noauth
+
+[Install]
+WantedBy=multi-user.target

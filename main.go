@@ -26,32 +26,6 @@ const banner = `
                |___/
 `
 
-const defaultConfig = `# TinyGate Configuration
-server:
-  port: 39901
-  timeout: 1200s
-  health: true
-
-gateway:
-  api_keys: "${TINYGATE_API_KEYS}"
-
-routes:
-  - prefix: "/zhipu"
-    downstream_url: "https://open.bigmodel.cn/api/paas"
-    api_key: "${ZHIPU_API_KEY}"
-    version_prefix: "/v4"
-
-  - prefix: "/mimo"
-    downstream_url: "https://api.xiaomimimo.com"
-    api_key: "${MIMO_API_KEY}"
-    version_prefix: "/v1"
-
-  - prefix: "/opencode"
-    downstream_url: "https://opencode.ai/zen/go"
-    api_key: "${OPENCODE_GO_API_KEY}"
-    version_prefix: "/v1"
-`
-
 func printQuickstart(port int) {
 	fmt.Print(banner)
 	fmt.Println(strings.Repeat("─", 55))
@@ -66,24 +40,14 @@ func printQuickstart(port int) {
 }
 
 func main() {
-	configPath := flag.String("config", "config.yaml", "path to config file")
+	configPath := flag.String("config", "/etc/tinygate", "path to config file")
 	flag.Parse()
 
 	exitReason := "normal shutdown"
 
 	data, err := os.ReadFile(*configPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("config file %s not found, generating default", *configPath)
-			if writeErr := os.WriteFile(*configPath, []byte(defaultConfig), 0644); writeErr != nil {
-				log.Fatalf("failed to generate config: %v", writeErr)
-			}
-			log.Printf("default config generated at %s", *configPath)
-			log.Println("please edit the config file and set your API keys, then restart")
-			log.Println("required env vars: TINYGATE_API_KEYS, ZHIPU_API_KEY, MIMO_API_KEY, OPENCODE_GO_API_KEY")
-			os.Exit(0)
-		}
-		log.Fatalf("failed to read config: %v", err)
+		log.Fatalf("failed to read config %s: %v", *configPath, err)
 	}
 
 	cfg, err := config.ParseConfig(data)

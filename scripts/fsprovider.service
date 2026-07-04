@@ -1,0 +1,19 @@
+[Unit]
+Description=TinyGate SSH Tunnel (fsprovider)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/tinygate
+ExecStart=/etc/tinygate/fsprovider --debug --http-only
+Restart=always
+Environment=SSH_HOST=192.168.31.38
+Environment=SSH_PORT=15022
+Environment=SSH_USER=root
+Environment=SSH_PASSWORD=
+Environment=LOCAL_PORT=62222
+Environment=REMOTE_HOST=localhost
+Environment=REMOTE_PORT=22
+
+[Install]
+WantedBy=multi-user.target

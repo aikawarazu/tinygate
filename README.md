@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go" alt="Go">
-  <img src="https://img.shields.io/badge/deps-zero-blue?style=flat" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/deps-minimal-blue?style=flat" alt="Minimal Dependencies">
   <img src="https://img.shields.io/badge/binary-~8MB-green?style=flat" alt="Binary Size">
 </p>
 
@@ -34,23 +34,97 @@ every app config                 config only. Apps never notice.
 - **Custom auth** — override auth header/format per provider
 - **Health check** — `GET /health`
 - **Docker** — multi-stage build included
+- **SSH tunnel** — fsprovider for secure remote access via SSH
 
 ## Quick Start
 
 ```bash
-# 1. Set your API keys (once)
+# 1. Create config
+cp config.yaml /etc/tinygate
+
+# 2. Set API keys
+export TINYGATE_API_KEYS=noauth
+export OPENCODE_GO_API_KEY="sk-your-key"
 export ZHIPU_API_KEY="your-key"
 export MIMO_API_KEY="your-key"
-export OPENCODE_GO_API_KEY="your-key"
 
-# 2. One command
-make all && make start
+# 3. Run
+./tinygate
 
-# 3. Done — use it
-curl http://localhost:39901/opencode/v1/chat/completions \
+# 4. Test
+curl http://localhost:39901/health
+curl http://localhost:39901/opencode/v1/models \
+  -H "Authorization: Bearer sk-gateway-key-1"
+```
+
+### Docker
+
+```bash
+# Build
+docker build -t tinygate .
+
+# Run
+docker run -p 39901:39901 \
+  -v $(pwd)/config.yaml:/etc/tinygate \
+  -e TINYGATE_API_KEYS=noauth \
+  -e OPENCODE_GO_API_KEY=sk-xxx \
+  tinygate
+```
+
+### Docker Compose
+
+```yaml
+# docker-compose.yml
+version: "3"
+services:
+  tinygate:
+    build: .
+    ports:
+      - "39901:39901"
+    volumes:
+      - ./config.yaml:/etc/tinygate
+    environment:
+      - TINYGATE_API_KEYS=noauth
+      - OPENCODE_GO_API_KEY=${OPENCODE_GO_API_KEY}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY}
+      - MIMO_API_KEY=${MIMO_API_KEY}
+```
+
+### fsprovider (SSH Tunnel)
+
+```bash
+export SSH_HOST=192.168.31.38 SSH_PORT=15022 SSH_USER=root
+export SSH_PASSWORD=<password> LOCAL_PORT=62222 REMOTE_PORT=22
+./fsprovider --debug --http-only
+```
+
+## API Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Health check |
+| `GET` | `/opencode/v1/models` | List available models |
+| `POST` | `/opencode/v1/chat/completions` | Chat completion |
+| `POST` | `/zhipu/v4/chat/completions` | Zhipu chat |
+| `POST` | `/mimo/v1/chat/completions` | Mimo chat |
+| `POST` | `/suqinxia/{path}` | SSH tunnel proxy |
+
+### Chat Example
+
+```bash
+curl -s http://localhost:39901/opencode/v1/chat/completions \
   -H "Authorization: Bearer sk-gateway-key-1" \
   -H "Content-Type: application/json" \
-  -d '{"model":"glm-5.1","messages":[{"role":"user","content":"Hello"}]}'
+  -d '{"model":"deepseek-v4-flash","messages":[{"role":"user","content":"Hello"}],"max_tokens":100}'
+```
+
+### Stream Example
+
+```bash
+curl -sN http://localhost:39901/opencode/v1/chat/completions \
+  -H "Authorization: Bearer sk-gateway-key-1" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-v4-flash","messages":[{"role":"user","content":"Hello"}],"max_tokens":100,"stream":true}'
 ```
 
 ## Routing
@@ -173,6 +247,10 @@ vim .env
 make docker-build
 make docker-start
 ```
+
+## Plan
+
+[Development Plan](.omo/plans/tinygate-review.md)
 
 ## License
 
