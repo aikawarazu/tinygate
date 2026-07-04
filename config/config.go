@@ -45,6 +45,7 @@ type RouteConfig struct {
 	APIKey         string `yaml:"api_key"`
 	AuthHeader     string `yaml:"auth_header"`
 	AuthFormat     string `yaml:"auth_format"`
+	VersionPrefix  string `yaml:"version_prefix"`
 }
 
 func ParseConfig(data []byte) (*Config, error) {
@@ -70,6 +71,9 @@ func ParseConfig(data []byte) (*Config, error) {
 		if cfg.Routes[i].AuthFormat == "" {
 			cfg.Routes[i].AuthFormat = "Bearer ${api_key}"
 		}
+		// version_prefix is intentionally left empty — each route must explicitly
+		// configure its own version. Different downstream providers use different
+		// API versions (e.g. /v4 for zhipu, /v1 for mimo).
 		// Inject env vars
 		cfg.Routes[i].APIKey = injectEnvVars(cfg.Routes[i].APIKey)
 	}

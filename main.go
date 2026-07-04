@@ -39,14 +39,17 @@ routes:
   - prefix: "/zhipu"
     downstream_url: "https://open.bigmodel.cn/api/paas"
     api_key: "${ZHIPU_API_KEY}"
+    version_prefix: "/v4"
 
   - prefix: "/mimo"
     downstream_url: "https://api.xiaomimimo.com"
     api_key: "${MIMO_API_KEY}"
+    version_prefix: "/v1"
 
   - prefix: "/opencode"
     downstream_url: "https://opencode.ai/zen/go"
     api_key: "${OPENCODE_GO_API_KEY}"
+    version_prefix: "/v1"
 `
 
 func printQuickstart(port int) {
@@ -124,11 +127,14 @@ func main() {
 		proxy.ServeHTTP(w, r)
 	})
 
-	authProxy := gateway.AuthMiddleware(cfg.Gateway.Keys(), proxyMux)
+	keys := cfg.Gateway.Keys()
+	handler := http.Handler(proxyMux)
+	if !(len(keys) == 1 && keys[0] == "noauth") {
+		handler = gateway.AuthMiddleware(keys, handler)
+	}
+	mux.Handle("/", handler)
 
-	mux.Handle("/", authProxy)
-
-	handler := gateway.LoggingMiddleware(*verbose, mux)
+	handler = gateway.LoggingMiddleware(*verbose, mux)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 

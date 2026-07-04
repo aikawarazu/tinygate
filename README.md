@@ -82,6 +82,7 @@ routes:
   - prefix: "/provider"           # URL prefix for this provider
     downstream_url: "https://..." # downstream base URL
     api_key: "${ENV_VAR}"         # real API key (env var or literal)
+    version_prefix: "/v1"         # API version inserted into downstream path
     auth_header: "Authorization"  # optional, default: Authorization
     auth_format: "Bearer ${api_key}" # optional, default
 ```
