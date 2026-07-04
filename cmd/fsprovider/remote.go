@@ -29,6 +29,7 @@ func main() {
 	remoteHost := flag.String("remote-host", "localhost", "remote host to forward to")
 	remotePort := flag.Int("remote-port", 0, "remote port to forward to")
 	debug := flag.Bool("debug", false, "enable debug logging (print SSH connection details, request/response info)")
+	httpOnly := flag.Bool("http-only", false, "only forward HTTP requests")
 	flag.Parse()
 
 	if *host == "" || *user == "" || *sshArgs == "" || *localPort == 0 || *remotePort == 0 {
@@ -95,7 +96,11 @@ func main() {
 	}
 
 	if *debug {
-		log.Printf("proxy listening on %s, forwarding to %s via SSH", localAddr, remoteAddr)
+		mode := "SSH tunnel"
+		if *httpOnly {
+			mode = "SSH tunnel (HTTP only)"
+		}
+		log.Printf("proxy listening on %s, forwarding to %s via %s", localAddr, remoteAddr, mode)
 	}
 	fmt.Printf("listening on %s, forwarding to %s via SSH\n", localAddr, remoteAddr)
 
