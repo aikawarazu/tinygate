@@ -3,9 +3,8 @@
 ## Final Architecture
 
 ### Gateway (`./tinygate`)
-- Flags: `--config`, `--verbose`
+- Flag: `--config` only
 - Always logs: `→ downstream: URL` + `POST /path STATUS DURATION`
-- `--verbose`: adds request headers and body summary
 
 ### fsprovider (`./fsprovider`)
 - Flag: `--debug` — all SSH config from env vars
@@ -15,7 +14,7 @@
 
 | File | Description |
 |---|---|
-| `gateway/proxy.go` | Director `log.Printf` downstream URL; `LoggingMiddleware(verbose, next)` |
-| `main.go` | `--verbose` flag; `gateway.LoggingMiddleware(*verbose, http.Handler(mux))` |
+| `gateway/proxy.go` | Director `log.Printf` downstream URL; `LoggingMiddleware(next)` always logs |
+| `main.go` | `--config` flag only; `gateway.LoggingMiddleware(http.Handler(mux))` |
 | `cmd/fsprovider/remote.go` | SSH HTTP proxy; `--debug` flag; config from env |
 | `go.mod` | `golang.org/x/crypto v0.28.0` |
