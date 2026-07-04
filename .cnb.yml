@@ -3,6 +3,8 @@ main:
     - name: go-test
       docker:
         image: golang:1.22
+      env:
+        GOPROXY: https://goproxy.cn,direct
       stages:
         - name: test
           script: go test ./... -v
@@ -11,6 +13,8 @@ main:
     - name: go-test
       docker:
         image: golang:1.22
+      env:
+        GOPROXY: https://goproxy.cn,direct
       stages:
         - name: test
           script: go test ./... -v
@@ -22,6 +26,8 @@ $:
         - docker
       docker:
         image: golang:1.22
+      env:
+        GOPROXY: https://goproxy.cn,direct
       stages:
         - name: build binary
           script: CGO_ENABLED=0 GOOS=linux go build -o tinygate .
@@ -35,6 +41,8 @@ $:
     - name: build-artifacts
       docker:
         image: golang:1.22
+      env:
+        GOPROXY: https://goproxy.cn,direct
       stages:
         - name: build linux
           script: |
