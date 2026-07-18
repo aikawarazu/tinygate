@@ -159,7 +159,40 @@ routes:
     version_prefix: "/v1"         # API version inserted into downstream path
     auth_header: "Authorization"  # optional, default: Authorization
     auth_format: "Bearer ${api_key}" # optional, default
+
+# Optional fallback used when no `routes` prefix matches. The full request
+# path is forwarded to the downstream URL unchanged (no prefix is stripped).
+default_route:
+  downstream_url: "https://..."
+  api_key: "${ENV_VAR}"
+  version_prefix: "/v1"
 ```
+
+### Default route
+
+When a request path doesn't match any `routes` prefix, TinyGate normally
+returns `404 Not Found`. Configure `default_route` to forward those unmatched
+requests to a fallback downstream instead. The full original path is preserved
+on the forwarded request, so the downstream sees e.g. `/v1/chat/completions`
+rather than a stripped path.
+
+```yaml
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "${ZHIPU_API_KEY}"
+    version_prefix: "/v4"
+
+# Anything that isn't /zhipu/... goes here:
+default_route:
+  downstream_url: "https://opencode.ai/zen/go"
+  api_key: "${OPENCODE_GO_API_KEY}"
+  version_prefix: ""
+```
+
+All `RouteConfig` fields (`api_key`, `auth_header`, `auth_format`,
+`version_prefix`) are supported on `default_route`, and the same defaults and
+`${ENV_VAR}` substitution apply.
 
 ### Environment variables
 

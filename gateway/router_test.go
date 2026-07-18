@@ -92,3 +92,69 @@ func TestRouter_ExactMatch(t *testing.T) {
 		t.Errorf("expected empty remaining path, got %s", remainingPath)
 	}
 }
+
+func TestRouter_DefaultRoute_FallsBack(t *testing.T) {
+	routes := []config.RouteConfig{
+		{Prefix: "/zhipu", DownstreamURL: "https://open.bigmodel.cn/api/paas", APIKey: "sk-zhipu"},
+	}
+	router := NewRouter(routes)
+	defaultRoute := &config.RouteConfig{
+		Prefix:        "",
+		DownstreamURL: "https://opencode.ai/zen/go",
+		APIKey:        "sk-default",
+	}
+	router.SetDefault(defaultRoute)
+
+	// An unmatched path should hit the default route and preserve the
+	// original path as the remaining path (no prefix to strip).
+	route, remainingPath, ok := router.Match("/unknown/v1/chat")
+	if !ok {
+		t.Fatal("expected default route to match")
+	}
+	if route != defaultRoute {
+		t.Error("expected returned route to be the default route pointer")
+	}
+	if route.DownstreamURL != "https://opencode.ai/zen/go" {
+		t.Errorf("unexpected downstream_url: %s", route.DownstreamURL)
+	}
+	if remainingPath != "/unknown/v1/chat" {
+		t.Errorf("expected original path preserved, got %s", remainingPath)
+	}
+}
+
+func TestRouter_DefaultRoute_PrefersExplicitPrefix(t *testing.T) {
+	routes := []config.RouteConfig{
+		{Prefix: "/zhipu", DownstreamURL: "https://open.bigmodel.cn/api/paas", APIKey: "sk-zhipu"},
+	}
+	router := NewRouter(routes)
+	router.SetDefault(&config.RouteConfig{
+		DownstreamURL: "https://default.example.com",
+		APIKey:        "sk-default",
+	})
+
+	route, remainingPath, ok := router.Match("/zhipu/v4/chat")
+	if !ok {
+		t.Fatal("expected match")
+	}
+	if route.Prefix != "/zhipu" {
+		t.Errorf("expected /zhipu prefix, got %s", route.Prefix)
+	}
+	if remainingPath != "/v4/chat" {
+		t.Errorf("expected /v4/chat, got %s", remainingPath)
+	}
+}
+
+func TestRouter_NoDefault_NoMatch(t *testing.T) {
+	routes := []config.RouteConfig{
+		{Prefix: "/zhipu", DownstreamURL: "https://open.bigmodel.cn/api/paas", APIKey: "sk-zhipu"},
+	}
+	router := NewRouter(routes)
+
+	_, _, ok := router.Match("/unknown/path")
+	if ok {
+		t.Error("expected no match when default route is not configured")
+	}
+	if router.DefaultRoute() != nil {
+		t.Error("expected nil default route")
+	}
+}

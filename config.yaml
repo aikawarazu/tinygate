@@ -25,7 +25,9 @@ routes:
   - prefix: "/suqinxia"
     downstream_url: "http://localhost:62222"
 
-  - prefix: "/"
-    downstream_url: "https://opencode.ai/zen/go"
-    api_key: "${OPENCODE_GO_API_KEY}"
-    version_prefix: ""
+# Default route — used when no `routes` prefix matches. The full request
+# path is forwarded to the downstream URL unchanged.
+default_route:
+  downstream_url: "https://opencode.ai/zen/go"
+  api_key: "${OPENCODE_GO_API_KEY}"
+  version_prefix: ""

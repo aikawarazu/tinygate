@@ -56,10 +56,20 @@ func main() {
 	}
 
 	router := gateway.NewRouter(cfg.Routes)
+	if cfg.DefaultRoute != nil {
+		router.SetDefault(cfg.DefaultRoute)
+	}
 
 	proxies := make(map[string]*gateway.Proxy)
 	for _, route := range cfg.Routes {
 		proxies[route.Prefix] = gateway.NewProxy(route, cfg.Server.Timeout)
+	}
+
+	// The default route has no prefix entry in `proxies`; keep its proxy separate
+	// and dispatch to it when the router falls back to the default.
+	var defaultProxy *gateway.Proxy
+	if cfg.DefaultRoute != nil {
+		defaultProxy = gateway.NewProxy(*cfg.DefaultRoute, cfg.Server.Timeout)
 	}
 
 	mux := http.NewServeMux()
@@ -80,6 +90,15 @@ func main() {
 		}
 
 		r.URL.Path = remainingPath
+
+		if route == router.DefaultRoute() {
+			if defaultProxy == nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			defaultProxy.ServeHTTP(w, r)
+			return
+		}
 
 		proxy, ok := proxies[route.Prefix]
 		if !ok {

@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Gateway GatewayConfig `yaml:"gateway"`
-	Routes  []RouteConfig `yaml:"routes"`
+	Server       ServerConfig   `yaml:"server"`
+	Gateway      GatewayConfig  `yaml:"gateway"`
+	Routes       []RouteConfig  `yaml:"routes"`
+	DefaultRoute *RouteConfig   `yaml:"default_route"`
 }
 
 type ServerConfig struct {
@@ -76,6 +77,17 @@ func ParseConfig(data []byte) (*Config, error) {
 		// API versions (e.g. /v4 for zhipu, /v1 for mimo).
 		// Inject env vars
 		cfg.Routes[i].APIKey = injectEnvVars(cfg.Routes[i].APIKey)
+	}
+
+	// Apply the same defaults to the default route (if configured)
+	if cfg.DefaultRoute != nil {
+		if cfg.DefaultRoute.AuthHeader == "" {
+			cfg.DefaultRoute.AuthHeader = "Authorization"
+		}
+		if cfg.DefaultRoute.AuthFormat == "" {
+			cfg.DefaultRoute.AuthFormat = "Bearer ${api_key}"
+		}
+		cfg.DefaultRoute.APIKey = injectEnvVars(cfg.DefaultRoute.APIKey)
 	}
 
 	return cfg, nil

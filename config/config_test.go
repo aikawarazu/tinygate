@@ -167,3 +167,59 @@ routes:
 		t.Errorf("expected default version_prefix to be empty, got %s", cfg.Routes[0].VersionPrefix)
 	}
 }
+
+func TestParseConfig_DefaultRoute(t *testing.T) {
+	os.Setenv("DEFAULT_API_KEY", "sk-from-env")
+	defer os.Unsetenv("DEFAULT_API_KEY")
+
+	yaml := `
+gateway:
+  api_keys: "sk-key-1"
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "sk-zhipu"
+default_route:
+  downstream_url: "https://opencode.ai/zen/go"
+  api_key: "${DEFAULT_API_KEY}"
+  version_prefix: ""
+`
+	cfg, err := ParseConfig([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.DefaultRoute == nil {
+		t.Fatal("expected default_route to be set")
+	}
+	if cfg.DefaultRoute.DownstreamURL != "https://opencode.ai/zen/go" {
+		t.Errorf("unexpected downstream_url: %s", cfg.DefaultRoute.DownstreamURL)
+	}
+	if cfg.DefaultRoute.APIKey != "sk-from-env" {
+		t.Errorf("expected env-injected api_key sk-from-env, got %s", cfg.DefaultRoute.APIKey)
+	}
+	// Defaults should be applied to the default route too.
+	if cfg.DefaultRoute.AuthHeader != "Authorization" {
+		t.Errorf("expected default auth_header Authorization, got %s", cfg.DefaultRoute.AuthHeader)
+	}
+	if cfg.DefaultRoute.AuthFormat != "Bearer ${api_key}" {
+		t.Errorf("expected default auth_format, got %s", cfg.DefaultRoute.AuthFormat)
+	}
+}
+
+func TestParseConfig_NoDefaultRoute(t *testing.T) {
+	yaml := `
+gateway:
+  api_keys: "sk-key-1"
+routes:
+  - prefix: "/zhipu"
+    downstream_url: "https://open.bigmodel.cn/api/paas"
+    api_key: "sk-zhipu"
+`
+	cfg, err := ParseConfig([]byte(yaml))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.DefaultRoute != nil {
+		t.Errorf("expected nil default_route, got %+v", cfg.DefaultRoute)
+	}
+}
